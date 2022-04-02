@@ -4,9 +4,9 @@
 #
 # Paramters:
 #   [*pmx_node*]          - The Proxmox node to create the lxc container on.
-#   [*vm_name*]           - The name of the new VM.
 #   [*os_template*]       - Name of LXC template 
-#   [*newid*]             - OPTIONAL: The ID for the new Virtual Machine. If unassigned, the next available ID will be used.
+#   [*vm_name*]           - OPTIONAL: The name of the new VM. (default: $title)
+#   [*newid*]             - OPTIONAL: ID of the new container
 #
 #   [*cpu_cores*]         - OPTIONAL: The number of CPU cores to be assigned to the new VM.
 #   [*memory*]            - OPTIONAL: The amount of memory to be assigned to the new VM, in Megabytes (2GB = 2048).
@@ -18,25 +18,20 @@
 #   [*disk_target]        - OPTIONAL: The storage location for the new VM disk. If undefined, will default to the Templates volume.
 #   [*description*]       - OPTIONAL: - Currently disabled 
 #
-#   [*net_name*]          - OPTIONAL: Name of network interface
-#   [*net_mac_addr*]      - OPTIONAL: Mac address of network interface
-#   [*net_bridge*]        - OPTIONAL: Name of network bridge
 #   [*ipv4_static]        - Boolean. If true, you must define the CIDR and Gateway values.
 #   [*ipv4_static_cidr*]  - OPTIONAL: If ipv4_static is true, this value must be in the format '192.168.1.20/24'.
 #   [*ipv4_static_gw*]    - OPTIONAL: If ipv4_static is true, this value must be in the format '192.168.1.1'.
-#
-#   [*fuse*]              - OPTIONAL: Boolean. If true, feature "fuse" is defined
-#   [*mknod*]             - OPTIONAL: Boolean. If true, feature "mknod" is defined
-#   [*nfs*]               - OPTIONAL: Boolean. If true, feature "nfs" is defined
-#   [*cifs*]              - OPTIONAL: Boolean. If true, feature "cifs" is defined
-#   [*nesting*]           - OPTIONAL: Boolean. If true, feature "nesting" is defined 
+#   [*ci_username*]       - OPTIONAL: The default username for the Cloud-Init drive to be configured.
+#   [*ci_password*]       - OPTIONAL: The default password for the Cloud-Init drive to be configured.
+#   [*newid*]             - OPTIONAL: The ID for the new Virtual Machine. If unassigned, the next available ID will be used.
+#   [*clone_type*]        - Boolean. If true, a full disk clone will be created. If false, a linked-clone will be created. Not recommended.
 #
 define proxmox_api::lxc::create (
   ## Default Settings
-  String[1]         $pmx_node,
-  String[1]         $vm_name,
-  String[1]         $os_template,
-  Optional[Integer] $newid            = Integer($facts['proxmox_cluster_nextid']),
+  String[1]           $pmx_node,
+  String[1]           $os_template,
+  Optional[String[1]] $vm_name        = $title,
+  Optional[Integer]   $newid          = Integer($facts['proxmox_cluster_nextid']),
 
   ## VM Settings
   Optional[Integer] $cpu_cores        = 1,
