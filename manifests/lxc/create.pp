@@ -179,6 +179,8 @@ define proxmox_api::lxc::create (
                 }
                 # If the above checks pass, set the ip settings
                 $if_nondhcp = ",ip=${ipv4_static_cidr},gw=${ipv4_static_gw}"
+              } else {
+                $if_nondhcp = ",ip=dhcp"
               }
 
               ## definde network brige and warn is not defined
@@ -199,7 +201,7 @@ define proxmox_api::lxc::create (
               }
 
               ## set network config
-              $if_net_config = "--net0=\'name=${net_name}${if_net_bridge}${if_net_mac_addr}\'"
+              $if_net_config = "--net0=\'name=${net_name}${if_nondhcp}${if_net_bridge}${if_net_mac_addr}\'"
             }
 
             # Create the VM
