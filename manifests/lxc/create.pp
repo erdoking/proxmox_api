@@ -37,6 +37,7 @@ define proxmox_api::lxc::create (
   String[1]           $os_template,
   Optional[String[1]] $vm_name        = $title,
   Optional[Integer]   $newid          = Integer($facts['proxmox_cluster_nextid']),
+  Optional[Enum['running', 'stopped']] $state = 'running',
 
   ## VM Settings
   Optional[Integer] $cpu_cores        = 1,
@@ -59,6 +60,8 @@ define proxmox_api::lxc::create (
   Optional[String]  $ipv4_static_cidr = undef, # Needs to be in the format '192.168.1.20/24'
   Optional[String]  $ipv4_static_gw   = undef, # Needs to be in the format '192.168.1.1'
   # Optional[String]  $ci_sshkey       = '',  # Commented out; difficulties below.
+  Optional[String] $searchdomain      = undef,
+  Optional[String] $nameserver        = undef,
 
   ## Feature Settings
   Optional[Boolean] $fuse             = false,
@@ -66,6 +69,9 @@ define proxmox_api::lxc::create (
   Optional[Boolean] $nfs              = false,
   Optional[Boolean] $cifs             = false,
   Optional[Boolean] $nesting          = false,
+
+  ## custom script
+  Optional[String] $custom_script     = undef,
 ) {
     
   # Get and parse the facts for VMs, Storage, and Nodes.
@@ -129,6 +135,20 @@ define proxmox_api::lxc::create (
             # Evaluate if the VM should be protected
             if ($protected == true) {
               $if_protection = '--protection 1'
+            }
+
+            # Evaluate if searchdomain is defined
+            if $searchdomain {
+              $if_searchdomain = "--searchdomain ${searchdomain}"
+            }
+
+            # Evaluate if nameserver is defined
+            if $nameserver {
+                if (($nameserver =~ Stdlib::IP::Address::V4) == false) {
+                  fail('Nameserver is in the wrong format or undefined. MUST be a valid IPv4 address')
+                }
+                # If the above checks pass, set the ip settings
+                $if_nameserver = "--nameserver ${nameserver}"
             }
 
             ## Evaluate the features
@@ -207,7 +227,22 @@ define proxmox_api::lxc::create (
             # Create the VM
             exec{"create_${newid}":
               command => "/usr/bin/pvesh create /nodes/${pmx_node}/lxc --vmid=${newid} --ostemplate local:vztmpl/${os_template}\
-              --hostname=${vm_name} ${if_disk_target} --cores=${cpu_cores} --memory=${memory} --swap=${swap} ${if_protection} ${if_unprivileged} ${if_net_config} ${if_features} ${if_disk_size}",
+              --hostname=${vm_name} ${if_disk_target} --cores=${cpu_cores} --memory=${memory} --swap=${swap} ${if_protection} ${if_unprivileged} ${if_net_config} ${if_features} ${if_disk_size} ${if_searchdomain} ${if_nameserver}",
+            }
+
+            if ( $state == 'running' ) {
+              exec{"start_${newid}":
+                command => "/usr/bin/pvesh create /nodes/${pmx_node}/lxc/${newid}/status/start",
+              }
+            }
+
+            if $custom_script{
+              exec { 'run_custom_script':
+                command => "${custom_script} ${newid} ${vm_name} ${state}",
+                onlyif  => "test -f ${custom_script}",
+                path    => ["/usr/bin","/usr/sbin", "/bin"],
+                timeout => 0,
+              }
             }
       }
   }
