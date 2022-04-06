@@ -127,7 +127,7 @@ define proxmox_api::lxc::create (
              # }
             }
 
-            # Evaluate if the VM should be protected
+            # Evaluate if the VM should be unprivileged
             if ($unprivileged == true) {
               $if_unprivileged = '--unprivileged 1'
             }
