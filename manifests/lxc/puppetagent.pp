@@ -6,6 +6,7 @@
 #   [*puppetserver_id*]   - OPTIONAL: id of puppetmaster lxc container if given we will try to clean and sign the new vm
 #   [*puppetserver_name*] - OPTIONAL: name of puppetmaster for agent config
 #   [*certname*]          - OPTIONAL: certname of new vm if given we will try to clean and sign the new vm
+#   [*checkcmd*]          - OPTIONAL: how to check if puppet agent allready installed
 #   [*puppetversion*]     - OPTIONAL: for other versions, default to 7
 #
 define proxmox_api::lxc::puppetagent (
@@ -14,6 +15,7 @@ define proxmox_api::lxc::puppetagent (
   Optional[Integer[1]]           $puppetserver_id,
   Optional[String[1]]            $puppetserver_name,
   Optional[String[1]]            $certname            , 
+  Optional[String[1]]            $checkcmd            = 'pct exec ${lxc_id} -- test ! -d /opt/puppetlabs', 
   Optional[Integer]              $puppetversion       = 7,
 ) {
     
@@ -30,6 +32,7 @@ define proxmox_api::lxc::puppetagent (
     ## defaults
     Exec {
       path    => ["/usr/bin","/usr/sbin", "/bin"],
+      onlyif  => "$checkcmd",
     }
 
 
