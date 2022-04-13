@@ -31,6 +31,11 @@
 #   [*cifs*]              - OPTIONAL: Boolean. If true, feature "cifs" is defined
 #   [*nesting*]           - OPTIONAL: Boolean. If true, feature "nesting" is defined 
 #
+#   [*puppetserver_id*]      - OPTIONAL: lxc id of puppet master
+#   [*puppetserver_name*]    - OPTIONAL: Name of Puppetserver
+#   [*puppetversion*]        - OPTIONAL: version of puppet
+#   [*install_puppet_agent*] - OPTIONAL: Boolean. If true, puppet agent will be installed automatic
+#
 define proxmox_api::lxc::create (
   ## Default Settings
   String[1]           $pmx_node,
@@ -47,10 +52,10 @@ define proxmox_api::lxc::create (
   Optional[Boolean] $unprivileged     = true,    ## default of Proxmox
 
   ## Disk settings and Description
-  # Optional[String]  $disk_size       = undef,
+  # Optional[String]  $disk_size        = undef,
   Optional[Integer]  $disk_size       = undef,   ## Maybe switch back in the future
   Optional[String]   $disk_target     = local,
-  # Optional[String]  $description     = undef,
+  # Optional[String]  $description      = undef,
 
   ## Network Settings
   Optional[String]  $net_name         = 'eth0',
@@ -72,6 +77,13 @@ define proxmox_api::lxc::create (
 
   ## custom script
   Optional[String] $custom_script     = undef,
+ 
+  ## puppet master
+  Optional[Integer] $puppetserver_id  = undef,
+  Optional[String] $puppetserver_name = undef,
+  Optional[Integer] $puppetversion    = undef,
+
+  Optional[Boolean] $install_puppet_agent = true,
 ) {
     
   # Get and parse the facts for VMs, Storage, and Nodes.
@@ -238,10 +250,22 @@ define proxmox_api::lxc::create (
 
             if $custom_script{
               exec { 'run_custom_script':
-                command => "${custom_script} ${newid} ${vm_name} ${state}",
-                onlyif  => "test -f ${custom_script}",
+                command => "${custom_script} ${newid} ${vm_name} ${state} ${puppetserver_id} ${puppetserver_name} ${searchdomain} ${puppetversion},",
                 path    => ["/usr/bin","/usr/sbin", "/bin"],
                 timeout => 0,
+              }
+            }
+
+            if ($install_puppet_agent) {
+              exec { 'wait_for_lxc_server_startup' :
+                command => "sleep 20",
+                path => "/usr/bin:/bin",
+              }
+              proxmox_api::lxc::puppetagent { "${newid}":
+                puppetserver_id => ${puppetserver_id},
+                puppetserver_name => ${puppetserver_name},
+                certname => "${vm_name}.${searchdomain}",
+                puppetversion => ${puppetversion},
               }
             }
       }
