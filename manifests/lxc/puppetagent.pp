@@ -12,8 +12,8 @@
 define proxmox_api::lxc::puppetagent (
   ## Default Settings
   Integer[1]                     $lxc_id,
-  Optional[Integer]              $puppetserver_id,
-  Optional[String]               $puppetserver_name,
+  Optional[Integer]              $puppetserver_id     = 0,
+  Optional[String]               $puppetserver_name   = '',
   Optional[String]               $certname,
   Optional[Integer]              $puppetversion       = 7,
 ) {
@@ -63,7 +63,7 @@ define proxmox_api::lxc::puppetagent (
     command => "pct exec ${lxc_id} -- apt install puppet-agent -y",
   }
 
-  if $puppetserver_name {
+  if ($puppetserver_name != '') {
     exec { 'set puppet master':
       command => "pct exec ${lxc_id} -- /opt/puppetlabs/bin/puppet config set server \'${puppetserver_name}\' --section main",
     }
@@ -74,7 +74,7 @@ define proxmox_api::lxc::puppetagent (
     }
   }
 
-  if ($puppetserver_id) and ($puppetserver_id != 0) {
+  if ($puppetserver_id != 0) and ($puppetserver_name != '') {
     ## necessary step on puppermaster
     exec { 'sign puppet agent':
       command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca sign --certname ${certname}"
