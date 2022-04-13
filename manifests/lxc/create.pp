@@ -79,9 +79,9 @@ define proxmox_api::lxc::create (
   Optional[String] $custom_script     = undef,
  
   ## puppet master
-  Optional[Integer] $puppetserver_id  = undef,
-  Optional[String] $puppetserver_name = undef,
-  Optional[Integer] $puppetversion    = undef,
+  Optional[Integer] $puppetserver_id  = 0,
+  Optional[String] $puppetserver_name = "",
+  Optional[Integer] $puppetversion    = 7,
 
   Optional[Boolean] $install_puppet_agent = true,
 ) {
@@ -248,7 +248,7 @@ define proxmox_api::lxc::create (
               }
             }
 
-            if $custom_script{
+            if $custom_script {
               exec { 'run_custom_script':
                 command => "${custom_script} ${newid} ${vm_name} ${state} ${puppetserver_id} ${puppetserver_name} ${searchdomain} ${puppetversion},",
                 path    => ["/usr/bin","/usr/sbin", "/bin"],
@@ -256,16 +256,17 @@ define proxmox_api::lxc::create (
               }
             }
 
-            if ($install_puppet_agent) {
-              exec { 'wait_for_lxc_server_startup' :
+            if $install_puppet_agent {
+              exec { 'wait_for_lxc_server_startup':
                 command => "sleep 20",
                 path => "/usr/bin:/bin",
               }
-              proxmox_api::lxc::puppetagent { "${newid}":
-                puppetserver_id => ${puppetserver_id},
-                puppetserver_name => ${puppetserver_name},
+              proxmox_api::lxc::puppetagent { "$newid":
+                lxc_id => $newid,
+                puppetserver_id => $puppetserver_id,
+                puppetserver_name => "${puppetserver_name}",
                 certname => "${vm_name}.${searchdomain}",
-                puppetversion => ${puppetversion},
+                puppetversion => $puppetversion,
               }
             }
       }

@@ -11,10 +11,10 @@
 #
 define proxmox_api::lxc::puppetagent (
   ## Default Settings
-  Integer[1]                     $lxc_id              = $title,
-  Optional[Integer[1]]           $puppetserver_id,
-  Optional[String[1]]            $puppetserver_name,
-  Optional[String[1]]            $certname,
+  Integer[1]                     $lxc_id,
+  Optional[Integer]              $puppetserver_id,
+  Optional[String]               $puppetserver_name,
+  Optional[String]               $certname,
   Optional[Integer]              $puppetversion       = 7,
 ) {
 
@@ -51,7 +51,7 @@ define proxmox_api::lxc::puppetagent (
     command => "pct exec ${lxc_id} -- apt upgrade -y",
   }
 
-  if ($puppetserver_id) and ($certname) {
+  if ($puppetserver_id) and ($puppetserver_id != 0) and ($certname) {
 
     exec { 'ca clean on puppetmaster':
       command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca clean --certname ${certname}",
@@ -74,7 +74,7 @@ define proxmox_api::lxc::puppetagent (
     }
   }
 
-  if $puppetserver_id {
+  if ($puppetserver_id) and ($puppetserver_id != 0) {
     ## necessary step on puppermaster
     exec { 'sign puppet agent':
       command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca sign --certname ${certname}"
