@@ -54,7 +54,7 @@ define proxmox_api::lxc::puppetagent (
   if ($puppetserver_id) and ($puppetserver_id != 0) and ($certname) {
 
     exec { 'ca clean on puppetmaster':
-      command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca clean --certname ${certname}",
+      command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca clean --certname ${certname.downcase()}",
       returns => [0, 1],
     }
   }
@@ -77,7 +77,7 @@ define proxmox_api::lxc::puppetagent (
   if ($puppetserver_id != 0) and ($puppetserver_name != '') {
     ## necessary step on puppermaster
     exec { 'sign puppet agent':
-      command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca sign --certname ${certname}"
+      command => "pct exec ${puppetserver_id} -- /opt/puppetlabs/server/bin/puppetserver ca sign --certname ${certname.downcase()}"
     }
 
     notify { "The next step can running for a long time! Timout disabled ...": }
