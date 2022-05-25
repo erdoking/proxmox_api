@@ -30,6 +30,7 @@
 #   [*nfs*]               - OPTIONAL: Boolean. If true, feature "nfs" is defined
 #   [*cifs*]              - OPTIONAL: Boolean. If true, feature "cifs" is defined
 #   [*nesting*]           - OPTIONAL: Boolean. If true, feature "nesting" is defined 
+#   [*keyctl*]            - OPTIONAL: Boolean. If true, feature "keyctl" is defined 
 #
 #   [*puppetserver_id*]      - OPTIONAL: lxc id of puppet master
 #   [*puppetserver_name*]    - OPTIONAL: Name of Puppetserver
@@ -74,6 +75,7 @@ define proxmox_api::lxc::create (
   Optional[Boolean] $nfs              = false,
   Optional[Boolean] $cifs             = false,
   Optional[Boolean] $nesting          = false,
+  Optional[Boolean] $keyctl           = false,
 
   ## custom script
   Optional[String] $custom_script     = undef,
@@ -174,6 +176,9 @@ define proxmox_api::lxc::create (
               if ($nesting == true) {
                 $if_nesting = ',nesting=1'
               }
+              if ($keyctl == true) {
+                $if_keyctl = ',keyctl=1'
+              }
               ## Evaluate mount-features
               if ($nfs) or ($cifs) {
                 if ($nfs == true) and ($cifs == true) {
@@ -186,7 +191,7 @@ define proxmox_api::lxc::create (
               }
 
               ## remove first character (,)
-              $features_string = "${if_fuse}${if_mknod}${if_nesting}${if_mounts}"
+              $features_string = "${if_fuse}${if_mknod}${if_nesting}${if_keyctl}${if_mounts}"
               $features = regsubst("${features_string}", '^.(.*)$', '\1')
               $if_features="--features=\"${features}\""
             }
