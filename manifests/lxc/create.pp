@@ -112,6 +112,10 @@ define proxmox_api::lxc::create (
   # Confirm that the Clone ID is not the same as the New ID.
   if ! ($vm_name in $vmnames) {
 
+    ## dirty hack, if no vmid is defined we can just create one vm during puppet run
+    ## this is because "proxmox_cluster_nextid" just give one new id during run
+    if ! defined(Exec["create_${newid}"]) {
+
       # Confirm that the New ID is not in the list of existing VMIDs.
       # If the New ID is in the list, simply don't attempt to create/overwrite it.
       if ! ($newid in $vmids) {
@@ -275,6 +279,7 @@ define proxmox_api::lxc::create (
               }
             }
       }
+    }
   }
 }
 
