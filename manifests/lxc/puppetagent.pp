@@ -49,6 +49,7 @@ define proxmox_api::lxc::puppetagent (
 
   exec { 'apt upgrade':
     command => "pct exec ${lxc_id} -- apt upgrade -y",
+    timeout => 0,
   }
 
   if ($puppetserver_id) and ($puppetserver_id != 0) and ($certname) {
